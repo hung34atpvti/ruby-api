@@ -6,19 +6,19 @@ class ApplicationController < ActionController::API
   private
 
   def authenticate_user
-    authorization = requests[:authorization]
-    token = authorization.split("Bearer ").last if authorization.nil?
+    authorization = request.headers[:authorization]
+    token = authorization.split("Bearer ")[1] if authorization.nil?
     if token.nil?
       begin
         @decoded = JwtToken.decode(token)
-        @current_user = User.find(@decoded[:user_id])
+        @current_user = User.find_by(@decoded["user_id"])
       rescue ActiveRecord::RecordNotFound => e
-        render json: { errors: e.message }, status: :unauthorized
+        render json: { error: "User not found" }, status: 401
       rescue JWT::DecodeError => e
-        render json: { errors: e.message }, status: :unauthorized
+        render json: { error: "Invalid token" }, status: 401
       end
     else
-      render json: { errors: "Empty token" }, status: :unauthorized
+      render json: { message: "Empty authorization" }, status: 401
     end
   end
 end
