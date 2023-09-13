@@ -3,18 +3,20 @@ class UsersController < ApplicationController
   before_action :find_user, only: [:show, :update, :destroy]
 
   def index
-    @users = User.all
+    @users = User.all.map { |user| user.attributes.except("password_digest") }
     render json: @users, status: 200
   end
 
   def show
-    render json: @user, status: 200
+    user_without_password = @user.attributes.except("password_digest")
+    render json: user_without_password, status: 200
   end
 
   def create
-    @user = User.new(user_params)
+    @user = User.new(email: params[:email], name: params[:name], password: user_params[:password], password_confirmation: user_params[:password])
     if @user.save
-      render json: @user, status: :created
+      user_without_password = @user.attributes.except("password_digest")
+      render json: user_without_password, status: :created
     else
       render json: @user.errors, status: :unprocessable_entity
     end

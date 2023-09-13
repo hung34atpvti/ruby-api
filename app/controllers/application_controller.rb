@@ -1,17 +1,16 @@
 class ApplicationController < ActionController::API
-  include JwtToken
-
+  include AuthHelper
   before_action :authenticate_user
 
   private
 
   def authenticate_user
-    authorization = request.headers[:authorization]
-    token = authorization.split("Bearer ")[1] if authorization.nil?
-    if token.nil?
+    authorization = request.headers["Authorization"]
+    token = authorization.split("Bearer ")[1] unless authorization.nil?
+    unless token.nil?
       begin
-        @decoded = JwtToken.decode(token)
-        @current_user = User.find_by(@decoded["user_id"])
+        @decoded = jwt_decode(token)
+        @current_user = User.find(@decoded["user_id"])
       rescue ActiveRecord::RecordNotFound => e
         render json: { error: "User not found" }, status: 401
       rescue JWT::DecodeError => e

@@ -3,9 +3,9 @@ class AuthenticationController < ApplicationController
 
   #POST /auth/login
   def login
-    @user = User.find(params[:email])
+    @user = User.find_by_email(params[:email])
     if @user && @user.authenticate(params[:password])
-      token = JwtToken.encode(user_id: @user.id)
+      token = jwt_encode({ user_id: @user.id })
       time = Time.now + 24.hours.to_i
       render json: { token: token, exp: time.strftime("%m-%d-%Y %H:%M"), email: @user[:email] }, status: :ok
     else
